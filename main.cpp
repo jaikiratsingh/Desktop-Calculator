@@ -11,9 +11,13 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <stack>
 
 // FUNCTION DECLARATIONS
 std::vector<std::string> parseExpression(std::string expression);
+std::vector<std::string> infixToPostfix(std::vector<std::string> infix_tokens);
+bool isOperand(std::string token);
+int getPrecedence(std::string oper);
 void showError();
 
 int main() {
@@ -25,12 +29,78 @@ int main() {
     // Parse the tokens from the expression
     std::vector<std::string> tokens = parseExpression(expression);
 
-    for(auto it : tokens) {
+    // convert to postfix
+    std::vector<std::string> postfix_tokens = infixToPostfix(tokens);
+
+    for(auto it : postfix_tokens) {
         std::cout << it << std::endl;
     }
 }
 
 // FUNCTION DEFINITIONS
+
+// takes infix tokens as input and returns postfix tokens
+std::vector<std::string> infixToPostfix(std::vector<std::string> infix_tokens) {
+    std::vector<std::string>::iterator token_ptr;
+    
+    std::stack<std::string> s;  // stack used to convert to postfix
+    std::vector<std::string> retvec;    // vector that is returned from this function
+
+    for(token_ptr = infix_tokens.begin(); token_ptr != infix_tokens.end(); token_ptr = next(token_ptr)) {
+        std::string token = *token_ptr;
+
+        if(isOperand(token)) {
+            retvec.push_back(token);
+        }else if(token == "(") {
+            s.push(token);
+        }else if(token == ")") {
+            while(!s.empty() && s.top() != "(") {
+                retvec.push_back(s.top());
+                s.pop();
+            }
+
+            if(!s.empty() && s.top() != "(") {
+                showError();
+            }else {
+                s.pop();
+            }
+        }else {
+            while(!s.empty() && getPrecedence(token) <= getPrecedence(s.top())) {
+                retvec.push_back(s.top());
+                s.pop();
+            }
+            s.push(token);
+        }
+    }
+
+    while(!s.empty()) {
+        retvec.push_back(s.top());
+        s.pop();
+    }
+
+    return retvec;
+}
+
+// tells if the input is operand or not
+bool isOperand(std::string token) {
+    return (!(token == "*" || token == "+" || token == "/" || token == "-" || token == "^" || token == "(" || token == ")"));
+}
+
+// returns precedence of an operator, higher value means higher precedence
+int getPrecedence(std::string oper) {
+    switch(oper[0]) {
+        case '+' :
+        case '-' :
+            return 1;
+        case '*' :
+        case '/' :
+            return 2;
+        case '^' :
+            return 3;
+    }
+
+    return -1;
+}
 
 // Parses the expression, extracts all the tokens and returns it in a form of a vector
 std::vector<std::string> parseExpression(std::string expression) {
@@ -96,6 +166,7 @@ std::vector<std::string> parseExpression(std::string expression) {
 // shows the error, if it has occurred
 void showError() {
     std::cout << "There is some kind of error in your given expression. Kindly review it" << std::endl;
+    exit(0);
 }
 
 // ((123 + 5) * 2) / 2
