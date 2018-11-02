@@ -12,10 +12,12 @@
 #include <string>
 #include <vector>
 #include <stack>
+#include <math.h>
 
 // FUNCTION DECLARATIONS
 std::vector<std::string> parseExpression(std::string expression);
 std::vector<std::string> infixToPostfix(std::vector<std::string> infix_tokens);
+int eval(std::vector<std::string> tokens);
 bool isOperand(std::string token);
 int getPrecedence(std::string oper);
 void showError();
@@ -32,12 +34,46 @@ int main() {
     // convert to postfix
     std::vector<std::string> postfix_tokens = infixToPostfix(tokens);
 
-    for(auto it : postfix_tokens) {
-        std::cout << it << std::endl;
-    }
+    // find answer
+    int answer = eval(postfix_tokens);
+
+    std::cout << "Your Expression evaluates to : ";
+    std::cout << answer << std::endl;
 }
 
 // FUNCTION DEFINITIONS
+
+// evaluates a list of postfix tokens
+int eval(std::vector<std::string> tokens) {
+    std::vector<std::string>::iterator ptr;
+
+    std::stack<int> s;
+
+    for(ptr = tokens.begin(); ptr != tokens.end(); ptr = next(ptr)) {
+        if(isOperand(*ptr)) {
+            s.push(stoi(*ptr));
+        }else {
+            int upper = s.top();
+            s.pop();
+            int lower = s.top();
+            s.pop();
+
+            if(*ptr == "+") {
+                s.push(lower + upper);
+            }else if(*ptr == "-") {
+                s.push(lower - upper);
+            }else if(*ptr == "*") {
+                s.push(lower * upper);
+            }else if(*ptr == "/") {
+                s.push(lower / upper);
+            }else if(*ptr == "^") {
+                s.push(pow(lower, upper));
+            }
+        }
+    }
+
+    return s.top();
+}
 
 // takes infix tokens as input and returns postfix tokens
 std::vector<std::string> infixToPostfix(std::vector<std::string> infix_tokens) {
